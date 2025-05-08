@@ -2,9 +2,9 @@
 FROM python:3.10-slim
 
 WORKDIR /app
-COPY ServiceOne.py .
+COPY serviceOne.py .
 
 RUN pip install flask
 
 EXPOSE 5000
-CMD ["python", "ServiceOne.py"]
+CMD ["python", "serviceOne.py"]
