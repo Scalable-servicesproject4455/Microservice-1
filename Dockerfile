@@ -1,10 +1,6 @@
-# s1/Dockerfile
 FROM python:3.10-slim
-
 WORKDIR /app
-COPY serviceOne.py .
-
-RUN pip install flask
-
-EXPOSE 5000
-CMD ["python", "serviceOne.py"]
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
+EXPOSE 5000  # change to 8080 for microservice-2
+CMD ["python", "app.py"]
