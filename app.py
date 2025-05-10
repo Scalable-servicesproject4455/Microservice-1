@@ -4,6 +4,10 @@ import traceback
 import logging
 import socket  # Import the socket module
 import db.connectToDb
+from service.getTempService import get_all_temperatures, get_temperature_by_room_id
+from service.insertTempService import insert_temperature, insert_multiple_temperatures
+from service.updateTempService import update_temperature_by_room_id
+from service.deleteTempService import delete_by_room_id, delete_all_temperatures
  
 app = Flask(__name__)
  
@@ -71,7 +75,7 @@ def publish_message():
         logger.error(f"An unexpected error occurred: {e}", exc_info=True)
         return jsonify({"status": "error", "message": f"An unexpected error occurred: {e}", "traceback": traceback.format_exc()}), 500
  
-@app.route('/api/createAndGetData', methods=['GET'])
+@app.route('/temps/createAndGetData', methods=['GET'])
 def create_data():
     try:
         rows = db.connectToDb.connect_to_db()
@@ -110,6 +114,49 @@ def update_temperature():
     except Exception as e:
         logger.error(f"Error updating temperature: {e}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
+  # GET APIs
+@app.route('/temps', methods=['GET'])
+def get_all():
+    return jsonify(get_all_temperatures())
+
+@app.route('/temps/<int:room_id>', methods=['GET'])
+def get_by_id(room_id):
+    return jsonify(get_temperature_by_room_id(room_id))
+
+# INSERT APIs
+@app.route('/temps', methods=['POST'])
+def insert_one():
+    data = request.json
+    temp = data.get('temperature')
+    new_id = insert_temperature(temp)
+    return jsonify({'inserted_id': new_id})
+
+@app.route('/temps/batch', methods=['POST'])
+def insert_many():
+    data = request.json
+    temps = data.get('temperature_list', [])
+    count = insert_multiple_temperatures(temps)
+    return jsonify({'rows_inserted': count})
+
+# UPDATE APIs
+@app.route('/temps/<int:room_id>', methods=['PUT'])
+def update_temp(room_id):
+    data = request.json
+    new_temp = data.get('temperature')
+    rows = update_temperature_by_room_id(room_id, new_temp)
+    return jsonify({'rows_updated': rows})
+
+# DELETE APIs
+@app.route('/temps/<int:room_id>', methods=['DELETE'])
+def delete_id(room_id):
+    rows = delete_by_room_id(room_id)
+    return jsonify({'rows_deleted': rows})
+
+@app.route('/temps', methods=['DELETE'])
+def delete_all():
+    rows = delete_all_temperatures()
+    return jsonify({'rows_deleted': rows})
+ 
  
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050, debug=True)
