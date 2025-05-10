@@ -56,4 +56,39 @@ def connect_to_db():
             conn.close()
             print("Connection closed")
  
- 
+def update_temperature(room_id, new_temperature):
+    try:
+        conn = mysql.connector.connect(
+            host='mysql-db',
+            port=3306,
+            user='root',
+            password='root',
+            database='temp_db'
+        )
+
+        if conn.is_connected():
+            logger.debug("Connected to MySQL for update")
+            cursor = conn.cursor()
+
+            cursor.execute("UPDATE temp_service SET temperature = %s WHERE room_id = %s", (new_temperature, room_id))
+            conn.commit()
+
+            if cursor.rowcount == 0:
+                logger.warning(f"No room found with ID {room_id}")
+                return None
+
+            logger.info(f"Updated room {room_id} with temperature {new_temperature}")
+
+            # Fetch updated row
+            cursor.execute("SELECT * FROM temp_service WHERE room_id = %s", (room_id,))
+            row = cursor.fetchone()
+            return dict(room_id=row[0], temperature=row[1])
+
+    except Error as e:
+        logger.error(f"MySQL error: {e}")
+        raise e
+
+    finally:
+        if conn.is_connected():
+            conn.close()
+            logger.debug("MySQL connection closed after update")

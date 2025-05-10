@@ -83,7 +83,33 @@ def create_data():
     except Exception as e:
         logger.error(f"Error processing request: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
- 
+
+@app.route('/api/updateTemperature', methods=['PUT'])
+def update_temperature():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "JSON body is required"}), 400
+
+        room_id = data.get("room_id")
+        new_temp = data.get("temperature")
+
+        if room_id is None or new_temp is None:
+            return jsonify({"status": "error", "message": "Both 'room_id' and 'temperature' are required"}), 400
+
+        updated_row = db.connectToDb.update_temperature(room_id, new_temp)
+        if not updated_row:
+            return jsonify({"status": "error", "message": f"No room found with ID {room_id}"}), 404
+
+        return jsonify({
+            "status": "success",
+            "message": f"Temperature updated for room {room_id}",
+            "updated_data": updated_row
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error updating temperature: {e}", exc_info=True)
+        return jsonify({"status": "error", "message": str(e)}), 500
  
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050, debug=True)
